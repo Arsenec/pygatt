@@ -1,5 +1,6 @@
 from __future__ import print_function
 
+from shutil import which
 import functools
 import itertools
 import re
@@ -333,7 +334,7 @@ class GATTToolBackend(BLEBackend):
         """
 
         cmd = 'hcitool -i %s lescan' % self._hci_device
-        if run_as_root:
+        if run_as_root and which('sudo') != None:
             cmd = 'sudo %s' % cmd
 
         log.info("Starting BLE scan")
@@ -641,6 +642,10 @@ class GATTToolBackend(BLEBackend):
         return rval
 
     def reset(self):
-        subprocess.Popen(["sudo", "systemctl", "restart", "bluetooth"]).wait()
-        subprocess.Popen([
-            "sudo", "hciconfig", self._hci_device, "reset"]).wait()
+        if which('sudo') != None and which('systemctl') != None:
+            subprocess.Popen(["sudo", "systemctl", "restart", "bluetooth"]).wait()
+        if which('sudo') != None:
+            subprocess.Popen([
+                "sudo", "hciconfig", self._hci_device, "reset"]).wait()
+        else:
+            subprocess.Popen(["hciconfig", self._hci_device, "reset"]).wait()
